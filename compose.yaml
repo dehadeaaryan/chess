@@ -1,0 +1,43 @@
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    init: true
+    read_only: true
+    environment:
+      CHESS_DB: /data/chess.sqlite3
+    volumes:
+      - chess_data:/data
+    tmpfs:
+      - /tmp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      CHESS_DOMAIN: ${CHESS_DOMAIN:-chess.aaryandehade.com}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  chess_data:
+  caddy_data:
+  caddy_config:

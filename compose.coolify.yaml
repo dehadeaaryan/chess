@@ -1,0 +1,49 @@
+# Coolify: repository root as base directory; use this file as Compose Location.
+# Assign https://chess.aaryandehade.com:80 to web only.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    environment:
+      CHESS_DB: /data/chess.sqlite3
+    volumes:
+      - chess_data:/data
+    tmpfs:
+      - /tmp:size=64m
+    expose:
+      - '8000'
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    mem_limit: 1g
+    cpus: 1.0
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.web
+    restart: unless-stopped
+    environment:
+      # HTTP inside the stack; Coolify's proxy owns public TLS and ports 80/443.
+      CHESS_DOMAIN: ':80'
+    expose:
+      - '80'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    mem_limit: 128m
+    cpus: 0.5
+    depends_on:
+      api:
+        condition: service_healthy
+volumes:
+  chess_data:

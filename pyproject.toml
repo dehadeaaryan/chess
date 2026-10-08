@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aaryan-chess"
+version = "1.0.0"
+description = "Shared Python chess rules, terminal client, and Svelte web application"
+requires-python = ">=3.12"
+dependencies = ["chess==1.11.2", "fastapi==0.135.1", "starlette==0.52.1", "uvicorn==0.41.0"]
+
+[project.optional-dependencies]
+test = ["pytest==9.0.2", "httpx==0.28.1"]
+
+[project.scripts]
+aaryan-chess = "chess_game.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
